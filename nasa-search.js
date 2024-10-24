@@ -55,6 +55,12 @@ export class NasaSearch extends LitElement {
     this.items = [];
   }
 
+  somerandommethod(e) {
+
+window.open('whatever.com', '_blank');
+
+  }
+
   render() {
     return html`
     <h2>${this.title}</h2>
@@ -65,6 +71,10 @@ export class NasaSearch extends LitElement {
       </div>
     </details>
     <div class="results">
+
+<a href="whatever.com" target="_blank">Stuff</a>
+<div class="some-random-frigging-html-tag" @click="${this.somerandommethod}">Stuff</div>
+
       ${this.items.map((item, index) => html`
       <nasa-image
         source="${item.links[0].href}"
