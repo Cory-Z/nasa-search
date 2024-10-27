@@ -1,11 +1,12 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css } from "lit";
 import "./nasa-image.js";
+
 export class NasaSearch extends LitElement {
   static get properties() {
     return {
       title: { type: String },
       loading: { type: Boolean, reflect: true },
-      items: { type: Array, },
+      items: { type: Array },
       value: { type: String },
     };
   }
@@ -15,107 +16,97 @@ export class NasaSearch extends LitElement {
       :host {
         display: block;
       }
+
       :host([loading]) .results {
-        opacity: 0.1;
-        visibility: hidden;
-        height: 1px;
+        opacity: 0.5;
       }
+
       .results {
-        visibility: visible;
-        height: 100%;
-        opacity: 1;
-        transition-delay: .5s;
-        transition: .5s all ease-in-out;
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ddd-spacing-2);
       }
 
       details {
         margin: 16px;
         padding: 16px;
-        background-color: blue;
+        background-color: var(--ddd-primary-3);
+        color: var(--ddd-primary-17);
       }
+
       summary {
-        font-size: 24px;
-        padding: 8px;
-        color: white;
-        font-size: 42px;
+        font-size: var(--ddd-font-size-xl);
+        font-weight: bold;
       }
+
       input {
-        font-size: 20px;
+        font-size: var(--ddd-font-size-md);
         line-height: 40px;
         width: 100%;
+        padding: var(--ddd-spacing-2);
+        border-radius: var(--ddd-radius-sm);
+        border: 1px solid var(--ddd-border-color);
       }
     `;
   }
 
   constructor() {
     super();
-    this.value = null;
-    this.title = '';
+    this.value = "";
+    this.title = "NASA Image Search";
     this.loading = false;
     this.items = [];
   }
 
-  somerandommethod(e) {
+  inputChanged(e) {
+    this.value = e.target.value;
+  }
 
-window.open('whatever.com', '_blank');
+  updated(changedProperties) {
+    if (changedProperties.has("value") && this.value) {
+      this.updateResults(this.value);
+    }
+  }
 
+  async updateResults(value) {
+    this.loading = true;
+    try {
+      const response = await fetch(`https://images-api.nasa.gov/search?media_type=image&q=${value}`);
+      const data = await response.json();
+      this.items = data.collection.items || [];
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      this.loading = false;
+    }
   }
 
   render() {
     return html`
-    <h2>${this.title}</h2>
-    <details open>
-      <summary>Search inputs</summary>
-      <div>
-        <input id="input" placeholder="Search NASA images" @input="${this.inputChanged}" />
+      <h2>${this.title}</h2>
+      <details open>
+        <summary>Search NASA Images</summary>
+        <input
+          placeholder="Type keywords to search images"
+          @input="${this.inputChanged}"
+        />
+      </details>
+      <div class="results">
+        ${this.items.map(
+          (item) =>
+            html`
+              <nasa-image
+                .source="${item.links[0].href}"
+                .title="${item.data[0].title}"
+                .alt="${item.data[0].description || item.data[0].title}"
+                .secondaryCreator="${item.data[0].secondary_creator || 'NASA'}"
+              ></nasa-image>
+            `
+        )}
       </div>
-    </details>
-    <div class="results">
-
-<a href="whatever.com" target="_blank">Stuff</a>
-<div class="some-random-frigging-html-tag" @click="${this.somerandommethod}">Stuff</div>
-
-      ${this.items.map((item, index) => html`
-      <nasa-image
-        source="${item.links[0].href}"
-        title="${item.data[0].title}"
-      ></nasa-image>
-      `)}
-    </div>
     `;
-  }
-
-  inputChanged(e) {
-    this.value = this.shadowRoot.querySelector('#input').value;
-  }
-  // life cycle will run when anything defined in `properties` is modified
-  updated(changedProperties) {
-    // see if value changes from user input and is not empty
-    if (changedProperties.has('value') && this.value) {
-      this.updateResults(this.value);
-    }
-    else if (changedProperties.has('value') && !this.value) {
-      this.items = [];
-    }
-    // @debugging purposes only
-    if (changedProperties.has('items') && this.items.length > 0) {
-      console.log(this.items);
-    }
-  }
-
-  updateResults(value) {
-    this.loading = true;
-    fetch(`https://images-api.nasa.gov/search?media_type=image&q=${value}`).then(d => d.ok ? d.json(): {}).then(data => {
-      if (data.collection) {
-        this.items = [];
-        this.items = data.collection.items;
-        this.loading = false;
-      }  
-    });
-  }
-
-  static get tag() {
-    return 'nasa-search';
+  } static get tag() {
+    return "nasa-search";
   }
 }
 customElements.define(NasaSearch.tag, NasaSearch);
